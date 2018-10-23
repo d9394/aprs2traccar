@@ -1,9 +1,10 @@
 #!/usr/bin/python
 #coding=utf8
 from socket import * 
-import urllib2
+import requests
 import time
 import re
+import uuid
 import threading
 import aprslib
 import datetime,time,json
@@ -23,10 +24,6 @@ def string2timestamp(strValue):
 		return timeStamp
 	except ValueError as e:
 		print e
-#		d = datetime.datetime.strptime(strValue, "%Y%m%d%H%M%S")
-#		t = d.timetuple()
-#		timeStamp = int(time.mktime(t))
-#		timeStamp = float(str(timeStamp) + str("%06d" % d.microsecond))/1000000
 		print timeStamp
 		return timeStamp
 
@@ -35,7 +32,6 @@ def car_udp():
 	mSocket.bind(("",50025)) 
 	while True:
 		revcData, (remoteHost, remotePort) = mSocket.recvfrom(1024)
-#		revcData = mSocket.recv(1024).decode("gb2312")
 #		revcData="$SJHX,341200007E7E00007E7E020301803955352401161766210162090501010108191625132655351234567F12345F1"
 		revcData=revcData.decode("gb2312").strip()
 		print("Recv CAR UDP: %s, from %s:%s" % (revcData,remoteHost, remotePort))
@@ -45,12 +41,7 @@ def car_udp():
 			if GPS_Info :
 				result = send_traccar(GPS_Info)
 			else:
-				result = "Data Format Error"
-		else:
-			result = ""
-		if len(result)>0 :
-			sendDataLen = mSocket.sendto(result, (remoteHost, remotePort))
-			print("sendData(Len): %s(%s)" % (result,sendDataLen))
+				print("Decode error : %s" % GPS_Info)
 	mSocket.close()
 
 def aprs_udp():
@@ -58,21 +49,16 @@ def aprs_udp():
 	mSocket.bind(("",14580)) 
 	while True:
 		revcData, (remoteHost, remotePort) = mSocket.recvfrom(1024)
-#		revcData = mSocket.recv(1024).decode("gb2312")
 		revcData=revcData.decode("gb2312").strip()
-		print("Recv APRS UDP: %s, from %s:%s" % (revcData,remoteHost, remotePort))
+		print("%s Recv APRS UDP: %s\n from %s:%s" % (time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())), revcData,remoteHost, remotePort))
 		if len(revcData)>0 :
 			GPS_Info = aprs_decode(revcData)
-			print("Decode : %s " % GPS_Info)
+#			print("Decode : %s " % GPS_Info)
 			if GPS_Info :
 				result = send_traccar(GPS_Info)
 			else:
-				result = "APRS parsing result null"
-		else:
-			result = ""
-		if len(result)>0 :
-			sendDataLen = mSocket.sendto(result, (remoteHost, remotePort))
-			print("sendData(Len): %s(%s)" % (result,sendDataLen))
+#				result = "APRS parsing result null"
+				print("APRS parsing result error : %s" % revcData)
 	mSocket.close()
 
 def aprs_decode(udp_packet):
@@ -89,7 +75,6 @@ def aprs_decode(udp_packet):
 					print("Aprs packet %s " % udp_packet)
 					packet = None
 				else:
-					#k['id']=packet['from'].split("-")[0]
 					k['id']=packet['from'].upper()
 					try:
 						k['lat']=packet['latitude']
@@ -143,23 +128,27 @@ def car_decode(udp_packet):
 		return k
 	
 def send_traccar(msg):
-	http_str = 'http://127.0.0.1:5055/'
-	url = http_str + "?"
+	Http_url = 'http://127.0.0.1:5055/?'
 	for mm in msg:
-		url = url + mm + "=" + str(msg[mm]) + "&"
-	url = url[:-1]
-	req = urllib2.Request(url) # url 转换成发起get 请求的url
+		Http_url = Http_url + mm + "=" + str(msg[mm]) + "&"
+	Http_url = Http_url[:-1].decode('utf-8')
+	t = threading.Thread(target=get_threading,args=(Http_url,), name=uuid.uuid1())
+	t.start()
+	return
+
+def get_threading(get_url):
 	request_result=""
+	print("%s, Request URL : %s" % (time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())),get_url))
 	try:
-		revcData = urllib2.urlopen(req) # 发起GET http服务
-#	res = revcData.read() #把结果通过.read()函数读取出来
-#	traccar_return = json.loads(res)
+		req_session = requests.session()
+		revcData = req_session.get(get_url)
+		time.sleep(15)
+		req_session.close()
 		request_result="OK"
-	except:
-		print("Error Url : %s" % url)
-		request_result="Send Data to traccar Server Error"
-#	print("Send to traccar : %s" % request_result)
+	except urllib2.HTTPError, e:
+		request_result=("Send Data to traccar Server Error : %s" % e)
 	return request_result
+
 
 if __name__ == '__main__':
 	t1 = threading.Thread(target=car_udp, name='car_udp_server')  # 线程对象.
