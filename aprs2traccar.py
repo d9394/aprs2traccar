@@ -212,7 +212,10 @@ def send_traccar(msg):
 	for mm in msg:
 		if mm=="speed" :
 			msg[mm] = float(msg[mm]) * 0.54		#根据traccar(OsmAnd)速度单位为：节
-		Http_url = Http_url + mm + "=" + str(msg[mm]) + "&"
+		if mm=="hdop":	#根据traccar(OsmAnd)定议，方向角为：bearing
+			Http_url = Http_url + "bearing=" + str(msg[mm]) + "&"
+		else :	
+			Http_url = Http_url + mm + "=" + str(msg[mm]) + "&"
 	Http_url = Http_url[:-1].encode('utf-8').decode('utf-8')
 	_ = get_threading(Http_url)
 	return
