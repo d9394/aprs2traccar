@@ -7,7 +7,7 @@ receive aprs packet and send to traccar server
 # gps2traccar   
   
 
-1、接收gps格式转发到traccar中，
+1、接收gps格式转发到traccar中，  
 2、支持接收traccar enevt事件推送流：  
   - 要使traccar支持event推送需在traccar.xml配置中增加：
   ``` xml
