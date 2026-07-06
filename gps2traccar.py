@@ -14,19 +14,19 @@ import base64
 import urllib.request
 
 config={
-	"udp_car_server":("10.1.1.1:50025",),
-	"udp_aprs_server":("aprs.hellocq.net:14580",),
-	"relay_aprs_id":("AA111-5","BB2BB-7","cc3cc-6",),
-	"relay_car_id":("00000000","00000001","LM0C0174","00000059","00000072",),
-	"aprs_user":('N0CALL-1','13023'),
-	"tcp_aprs_server":("china.aprs2.net:14580"),
-	"aprs_user_pwd":("N0CALL-1",13023),
-	"event_port":18001,
-	"traccar_api":"http://127.0.0.1:8082",
-	"traccar_auth":base64.b64encode(b"admin:password").decode(),
-	"sms_gateway":"http://127.0.0.1:8001",
-	"map_zoom":12,
-	"geoapify_key":"1234567890",
+	"udp_car_server":("10.1.1.1:50025",),	# 转发到GPS2服务器
+	"udp_aprs_server":("aprs.hellocq.net:14580",),	# 转发到APRS服务器
+	"relay_aprs_id":("AA111-5","BB2BB-7","cc3cc-6",),	# 允许转发到APRS的ID
+	"relay_car_id":("00000000","00000001","LM0C0174","00000059","00000072",),	# 允许转发到GPS2的ID
+	"aprs_user":('N0CALL-1','13023'),	# 转发到APRS服务器的身份信息
+	"tcp_aprs_server":("china.aprs2.net:14580"),	# 用TCP模式转发的APS服务器
+	"aprs_user_pwd":("N0CALL-1",13023),	# 用TCP模式登陆时的身份信息
+	"event_port":18001,	# 用于监听traccar event推送的端口
+	"traccar_api":"http://127.0.0.1:8082",	# 用于请求traccar api的服务器地址和端口
+	"traccar_auth":base64.b64encode(b"admin:password").decode(),	# 用于登陆traccar服务器的用户和密码，用户跟WEB登陆一样是邮箱
+	"sms_gateway":"http://127.0.0.1:8001",	# 用于转发信息到SMS的SMS服务器
+	"map_zoom":12,	# 静态地图的放大倍数
+	"geoapify_key":"1234567890",	# 地址根据GPS反查地址用的API
 }
 
 data_queue=queue.Queue(1000)
